@@ -1,0 +1,111 @@
+/**************************************
+시퀸스:sequence 오라클 문법
+-자동증가하는 숫자를 제공하는 오라클 객체 : 인서트시 많이 사용(글번호 작성시)
+-테이블 컬럼이 자동증가하는 고유번호를 가질 때 사용
+    - 하나의 시퀸스를 여러 테이블이 공유하면 중간에 빈 값들이 들어갈 수 있다
+    
+생성구문
+create sequence sequence이름 ->여기까지가 기본구문
+ increment by n
+ start with n
+ maxvalue n
+ minvalue n
+ cycle
+ cashe n
+ 
+-시작값 설정시 
+      -증가 : minvalue보다 크거나 같은 값이여야
+      -감소 : maxvalue보다 작거나 같은 값이여야
+-nomaxvalue : 최대값 없을 때 디폴트값/ 오름차순의 경우 10^27의 값. 내림차순의 경우 -1을 자동으로 설정
+-nominvalue : 최소값 없을대 디폴트 값/ 오름차순의 경우 1, 내림차순의 경우 -(10^27)
+-cycle : 처음부터 다시 반복, 싸이클 할때는 스타트값
+
+이 아닌 디폴트값에서 시작
+-cashe  캐쉬사용여부 지정. 오라클 서버가 시퀸스가 제공할 값을 미리 조회해 메모리에 저장해 놓는 것.
+
+시퀸스 자동증가값 조회
+-sequence이름.nextval : 다음 증감치 조회
+-sequence이름.currval : 현재 시퀸스 값 조회 -> 위에꺼 한번 해주고 사용.
+
+-시퀸스 수정
+alter sequence 수정할시퀸스 이름 + 수정할 내용(start with절은 수정대상 아님)
+
+-시퀸스 제거
+drop sequence 시퀸스이름
+*******************************************************/
+create sequence dept_id_seq1;
+select dept_id_seq1.nextval from dual;
+
+insert into dept values (dept_id_seq1.nextval, '새부서', '서울');
+insert into dept values (dept_id_seq1.nextval, '새부서'||dept_id_seq1.currval, '서울');
+select * from dept;
+
+
+
+--1부터 자동 감소하는 시퀸스
+create sequence ex10_seq
+increment by -1;
+--자동감소, 스타트값의 디폴트값이 -1
+select ex10_seq.nextval from dual;
+
+--1부터 -50까지 -10씩 자동감소하는 시퀸스
+create sequence ex11_seq
+increment by -10
+minvalue -50; --감소일때는 minvalue로 제한값 설정
+
+select ex11_seq.nextval from dual;
+
+--100부터 -100까지 자동 감소하는 시퀸스
+drop sequence ex6_seq;
+create sequence ex6_seq
+increment by -100
+start with 100
+minvalue -100 --감소시 maxvalue의 디폴트 값은 -1 따라서 맥스밸류 지정해줘야함
+maxvalue 100;
+
+select ex6_seq.nextval from dual;
+
+--15에서 -15까지 1씩 감소하는 시퀸스 작성
+create sequence ex12_seq
+increment by -1
+start with 15
+minvalue -15
+maxvalue 15;
+
+-- -10부터 1씩 증가하는 시퀸스 작성
+create sequence ex14_seq
+increment by 1
+start with -10 --증가할 땐 minvalue 디폴트값이 1이라서, 민밸류 지정해줘야
+minvalue -10;
+
+
+-- TODO: 부서ID(dept.dept_id)의 값을 자동증가 시키는 sequence를 생성. 10 부터 10씩 증가하는 sequence
+-- 위에서 생성한 sequence를 사용해서  dept_copy에 5개의 행을 insert.
+
+create sequence dept_id_seq3
+increment by 10
+start with 10;
+
+create table dept_copy1
+as
+select * from dept where 1 = 0;
+
+insert into dept_copy1 values (dept_id_seq3.nextval, '기획부','서울');
+
+select * from dept_copy1;
+
+-- TODO: 직원ID(emp.emp_id)의 값을 자동증가 시키는 sequence를 생성. 10 부터 1씩 증가하는 sequence
+-- 위에서 생성한 sequence를 사용해 emp_copy에 값을 5행 insert   ***********emp2에 emp_id가 없어서 안됨
+
+create sequence emp_id_seq3
+increment by 1
+start with 10;
+
+create table emp_copy2
+as
+select * from emp;
+
+insert into emp_copy2 values (emp_id_seq3.nextval, '홍길동',null,null,'2020/10/10',5000,null,null,null);
+desc emp_copy2;
+
+select * from emp_copy2;
